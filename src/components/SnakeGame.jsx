@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './SnakeGame.css'; // 自定义样式文件
+import './SnakeGame.css';
 
 const SnakeGame = () => {
   // 游戏配置
@@ -25,6 +25,7 @@ const SnakeGame = () => {
   const [isPaused, setIsPaused] = useState(false);
   
   const gameBoardRef = useRef(null);
+  const touchStartRef = useRef({x: 0, y: 0});
   
   // 响应式设计：检测屏幕变化
   useEffect(() => {
@@ -36,13 +37,14 @@ const SnakeGame = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // 生成随机食物
+  // 生成随机食物 - 修复食物显示问题
   const generateFood = useCallback(() => {
     const newFood = {
       x: Math.floor(Math.random() * gridSize),
       y: Math.floor(Math.random() * gridSize)
     };
     
+    // 确保食物不会出现在蛇身上
     const isOnSnake = snake.some(segment => 
       segment.x === newFood.x && segment.y === newFood.y
     );
@@ -72,7 +74,48 @@ const SnakeGame = () => {
     setIsPaused(!isPaused);
   };
   
-  // 处理键盘和触摸事件
+  // 修复移动端滑动控制问题
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  };
+  
+  const handleTouchMove = (e) => {
+    if (!gameStarted || isPaused) return;
+    
+    const touch = e.touches[0];
+    const diffX = touch.clientX - touchStartRef.current.x;
+    const diffY = touch.clientY - touchStartRef.current.y;
+    
+    // 确保至少有30px的移动才触发方向变化，避免误触
+    if (Math.abs(diffX) > 30 || Math.abs(diffY) > 30) {
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        // 水平滑动
+        if (diffX > 0 && direction !== 'LEFT') {
+          setDirection('RIGHT');
+        } else if (diffX < 0 && direction !== 'RIGHT') {
+          setDirection('LEFT');
+        }
+      } else {
+        // 垂直滑动
+        if (diffY > 0 && direction !== 'UP') {
+          setDirection('DOWN');
+        } else if (diffY < 0 && direction !== 'DOWN') {
+          setDirection('UP');
+        }
+      }
+      // 重置起点，避免连续滑动
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+    }
+  };
+  
+  // 处理键盘事件
   useEffect(() => {
     if (!gameStarted || isPaused) return;
     
@@ -102,53 +145,8 @@ const SnakeGame = () => {
       }
     };
     
-    // 添加触摸事件处理
-    let touchStartX = 0;
-    let touchStartY = 0;
-    
-    const handleTouchStart = (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      e.preventDefault();
-    };
-    
-    const handleTouchMove = (e) => {
-      const touchX = e.touches[0].clientX;
-      const touchY = e.touches[0].clientY;
-      const diffX = touchX - touchStartX;
-      const diffY = touchY - touchStartY;
-      
-      // 确保至少有20px的移动才触发方向变化，避免误触
-      if (Math.abs(diffX) > 20 || Math.abs(diffY) > 20) {
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-          if (diffX > 0 && direction !== 'LEFT') {
-            setDirection('RIGHT');
-          } else if (diffX < 0 && direction !== 'RIGHT') {
-            setDirection('LEFT');
-          }
-        } else {
-          if (diffY > 0 && direction !== 'UP') {
-            setDirection('DOWN');
-          } else if (diffY < 0 && direction !== 'DOWN') {
-            setDirection('UP');
-          }
-        }
-        // 重置起点，避免连续滑动
-        touchStartX = touchX;
-        touchStartY = touchY;
-        e.preventDefault();
-      }
-    };
-    
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [direction, gameStarted, isPaused]);
   
   // 游戏主循环
@@ -271,6 +269,8 @@ const SnakeGame = () => {
                     width: `${gridSize * cellSize}px`,
                     height: `${gridSize * cellSize}px`,
                   }}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
                 >
                   {renderCells()}
                   
@@ -291,8 +291,7 @@ const SnakeGame = () => {
                     <div className="start-screen-overlay d-flex flex-column justify-content-center align-items-center">
                       <h2 className="text-primary fw-bold mb-3">欢迎来到贪吃蛇!</h2>
                       <p className="h6 mb-4 text-center">
-                        滑动屏幕或使用按钮控制蛇<br/>
-                        <small className="text-muted">将手机横屏获得更好体验</small>
+                        滑动屏幕或使用按钮控制蛇
                       </p>
                       <button 
                         className="btn btn-primary btn-lg px-4"
