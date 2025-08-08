@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const SnakeGame = () => {
-  // 游戏配置
-  const gridSize = 15; 
-  // 修复：使用函数动态计算单元格大小
-  const getCellSize = () => Math.min(window.innerWidth * 0.055, 30);
+  // 游戏配置 - 竖屏优化
+  const gridSize = 15; // 网格大小
+  const getCellSize = () => Math.min(window.innerWidth * 0.07, 30); // 动态计算单元格大小
   const initialSpeed = 150;
-  const minSpeed = 50;
+  const minSpeed = 60;
   const speedDecrement = 10;
   
   // 游戏状态
@@ -20,16 +19,13 @@ const SnakeGame = () => {
   });
   const [speed, setSpeed] = useState(initialSpeed);
   const [gameStarted, setGameStarted] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
-  // 修复：添加单元格大小的状态
   const [cellSize, setCellSize] = useState(getCellSize());
   
   const gameBoardRef = useRef(null);
   
-  // 响应式设计：检测屏幕方向变化
+  // 响应式设计：检测屏幕变化
   useEffect(() => {
     const handleResize = () => {
-      setIsPortrait(window.innerHeight > window.innerWidth);
       setCellSize(getCellSize());
     };
     
@@ -234,71 +230,93 @@ const SnakeGame = () => {
 
   return (
     <div className="snake-game-container">
-      {isPortrait && !gameStarted ? (
-        <div className="rotation-warning">
-          <div className="phone-icon">📱</div>
-          <p>请将手机横屏以获得更好体验</p>
+      <div className="game-header">
+        <h1 className="game-title">贪吃蛇</h1>
+        <div className="score-display">
+          <div className="score">得分: {score}</div>
+          <div className="high-score">最高分: {highScore}</div>
         </div>
-      ) : null}
+      </div>
       
-      <div className={`game-content ${isPortrait ? 'portrait' : 'landscape'}`}>
-        <h1 className="game-title">贪吃蛇游戏</h1>
-        
-        <div className="game-info">
-          <div className="score-board">
-            <div className="score">得分: {score}</div>
-            <div className="high-score">最高分: {highScore}</div>
-          </div>
-        </div>
-        
-        <div className="game-board-wrapper">
-          <div 
-            ref={gameBoardRef}
-            className="game-board"
-            style={{
-              width: `${gridSize * cellSize}px`,
-              height: `${gridSize * cellSize}px`,
-            }}
-          >
-            {renderCells()}
-            
-            {gameOver && (
-              <div className="game-over-overlay">
-                <h2>游戏结束!</h2>
-                <p>你的得分: {score}</p>
-                <button className="restart-button" onClick={startGame}>
-                  重新开始
-                </button>
-              </div>
-            )}
-            
-            {!gameStarted && (
-              <div className="start-screen-overlay">
-                <h2>欢迎来到贪吃蛇!</h2>
-                <p>使用方向键或滑动屏幕移动蛇</p>
-                <p>将手机横屏获得更好体验</p>
-                <button className="start-button" onClick={startGame}>
-                  开始游戏
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="mobile-controls">
-          <div className="direction-controls">
-            <button className="control-button" onClick={() => direction !== 'DOWN' && setDirection('UP')}></button>
-            <div className="horizontal-controls">
-              <button className="control-button" onClick={() => direction !== 'RIGHT' && setDirection('LEFT')}></button>
-              <button className="control-button blank"></button>
-              <button className="control-button" onClick={() => direction !== 'LEFT' && setDirection('RIGHT')}></button>
+      <div className="game-board-wrapper">
+        <div 
+          ref={gameBoardRef}
+          className="game-board"
+          style={{
+            width: `${gridSize * cellSize}px`,
+            height: `${gridSize * cellSize}px`,
+          }}
+        >
+          {renderCells()}
+          
+          {gameOver && (
+            <div className="game-over-overlay">
+              <h2>游戏结束!</h2>
+              <p>你的得分: {score}</p>
+              <button className="restart-button" onClick={startGame}>
+                重新开始
+              </button>
             </div>
-            <button className="control-button" onClick={() => direction !== 'UP' && setDirection('DOWN')}></button>
+          )}
+          
+          {!gameStarted && (
+            <div className="start-screen-overlay">
+              <h2>欢迎来到贪吃蛇!</h2>
+              <p>滑动屏幕或使用按钮控制蛇</p>
+              <button className="start-button" onClick={startGame}>
+                开始游戏
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="mobile-controls">
+        <div className="directional-pad">
+          <div className="dpad-row">
+            <div className="dpad-space"></div>
+            <button 
+              className="dpad-button up" 
+              onClick={() => direction !== 'DOWN' && setDirection('UP')}
+            >
+              ↑
+            </button>
+            <div className="dpad-space"></div>
           </div>
-          <div className="action-controls">
-            <button className="action-button" onClick={startGame}>开始/暂停</button>
-            <button className="action-button" onClick={() => setGameOver(true)}>结束</button>
+          <div className="dpad-row">
+            <button 
+              className="dpad-button left" 
+              onClick={() => direction !== 'RIGHT' && setDirection('LEFT')}
+            >
+              ←
+            </button>
+            <div className="dpad-center"></div>
+            <button 
+              className="dpad-button right" 
+              onClick={() => direction !== 'LEFT' && setDirection('RIGHT')}
+            >
+              →
+            </button>
           </div>
+          <div className="dpad-row">
+            <div className="dpad-space"></div>
+            <button 
+              className="dpad-button down" 
+              onClick={() => direction !== 'UP' && setDirection('DOWN')}
+            >
+              ↓
+            </button>
+            <div className="dpad-space"></div>
+          </div>
+        </div>
+        
+        <div className="action-buttons">
+          <button className="action-button pause" onClick={() => setGameStarted(!gameStarted)}>
+            {gameStarted ? '暂停' : '继续'}
+          </button>
+          <button className="action-button restart" onClick={startGame}>
+            重新开始
+          </button>
         </div>
       </div>
     </div>
@@ -320,127 +338,68 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: #f0f5ff;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
 }
 
 .snake-game-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 20px;
+  padding: 20px 15px 80px;
   position: relative;
 }
 
-.rotation-warning {
-  position: fixed;
-  top: 0;
-  left: 0;
+.game-header {
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.phone-icon {
-  font-size: 60px;
-  animation: rotate 2s infinite;
-  margin-bottom: 20px;
-}
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(90deg); }
-}
-
-.game-content {
-  width: 100%;
-  max-width: 800px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.game-content.portrait .game-board-wrapper {
-  margin-top: 10px;
+  max-width: 500px;
+  text-align: center;
   margin-bottom: 15px;
-}
-
-.game-content.portrait .mobile-controls {
-  margin-top: 10px;
-}
-
-.game-content.landscape {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.game-content.landscape .game-board-wrapper {
-  margin: 0 30px;
-}
-
-.game-content.landscape .mobile-controls {
-  margin-top: 20px;
-  flex-direction: column;
-  align-self: flex-end;
 }
 
 .game-title {
-  color: #2c3e50;
-  font-size: 32px;
-  margin-bottom: 15px;
-  text-align: center;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  font-size: 36px;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  color: #fff;
 }
 
-.game-info {
-  width: 100%;
+.score-display {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
-}
-
-.score-board {
-  display: flex;
-  gap: 30px;
-  background: #3498db;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
+  gap: 25px;
+  font-size: 18px;
   font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .game-board-wrapper {
-  position: relative;
   display: flex;
   justify-content: center;
+  width: 100%;
+  margin-bottom: 30px;
 }
 
 .game-board {
-  background: #ecf0f1;
-  border: 2px solid #3498db;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   position: relative;
+  backdrop-filter: blur(4px);
 }
 
 .grid-cell {
   position: absolute;
   transition: all 0.1s;
+  border-radius: 4px;
 }
 
 .grid-cell.snake {
   background: #2ecc71;
-  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(46, 204, 113, 0.8);
   z-index: 1;
 }
 
@@ -448,6 +407,7 @@ html, body {
   background: #27ae60;
   border-radius: 30%;
   transform: scale(0.9);
+  box-shadow: 0 0 8px rgba(39, 174, 96, 0.9);
 }
 
 .grid-cell.food {
@@ -455,6 +415,7 @@ html, body {
   border-radius: 50%;
   animation: pulse 1s infinite alternate;
   z-index: 2;
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.8);
 }
 
 @keyframes pulse {
@@ -479,7 +440,7 @@ html, body {
   font-size: 18px;
   text-align: center;
   padding: 20px;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .game-over-overlay h2, .start-screen-overlay h2 {
@@ -489,156 +450,135 @@ html, body {
 }
 
 button {
-  background: #3498db;
+  background: linear-gradient(to right, #3498db, #2980b9);
   color: white;
   border: none;
-  padding: 12px 30px;
+  padding: 12px 25px;
   font-size: 18px;
   border-radius: 50px;
   cursor: pointer;
   margin: 10px 5px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   outline: none;
+  font-weight: bold;
 }
 
 button:hover, button:active {
-  background: #2980b9;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
 }
 
 .restart-button {
-  background: #2ecc71;
+  background: linear-gradient(to right, #2ecc71, #27ae60);
 }
 
-.restart-button:hover {
-  background: #27ae60;
+.start-button {
+  background: linear-gradient(to right, #9b59b6, #8e44ad);
 }
 
 .mobile-controls {
+  width: 100%;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 500px;
+  gap: 20px;
 }
 
-.direction-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 300px;
-}
-
-.control-button {
-  background: rgba(52, 152, 219, 0.3);
-  border: 2px solid #3498db;
-  border-radius: 15px;
-  width: 100%;
-  height: 60px;
-  position: relative;
-  transition: all 0.2s;
-}
-
-.control-button:active {
-  background: rgba(52, 152, 219, 0.8);
-}
-
-.control-button:nth-child(1) {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.control-button:nth-child(1)::after {
-  content: "↑";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-}
-
-.control-button:nth-child(2) {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.control-button:nth-child(2)::after {
-  content: "←";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-}
-
-.control-button:nth-child(3) {
-  grid-column: 2;
-  grid-row: 2;
-  background: transparent;
-  border: none;
-}
-
-.control-button:nth-child(4) {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.control-button:nth-child(4)::after {
-  content: "→";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-}
-
-.control-button:nth-child(5) {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.control-button:nth-child(5)::after {
-  content: "↓";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-}
-
-.action-controls {
+.directional-pad {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+
+.dpad-row {
+  display: flex;
+  justify-content: center;
   width: 100%;
-  max-width: 350px;
+}
+
+.dpad-button {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  font-size: 28px;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  backdrop-filter: blur(5px);
+}
+
+.dpad-button:active {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(0.95);
+}
+
+.dpad-space {
+  width: 60px;
+  height: 60px;
+}
+
+.dpad-center {
+  width: 60px;
+  height: 60px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  width: 100%;
 }
 
 .action-button {
   flex: 1;
-  margin: 0 5px;
-  padding: 15px;
+  padding: 12px;
   font-size: 16px;
-  background: #9b59b6;
+  border-radius: 50px;
+  max-width: 140px;
 }
 
-@media (max-width: 767px) {
-  .score-board {
-    padding: 8px 16px;
-    font-size: 14px;
+.pause {
+  background: linear-gradient(to right, #f39c12, #e67e22);
+}
+
+.restart {
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+}
+
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 28px;
   }
   
-  .game-title {
+  .score-display {
+    font-size: 16px;
+    gap: 20px;
+  }
+  
+  .directional-pad {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .dpad-button {
+    width: 55px;
+    height: 55px;
     font-size: 24px;
   }
   
-  .game-over-overlay h2, .start-screen-overlay h2 {
-    font-size: 26px;
+  .dpad-space, .dpad-center {
+    width: 55px;
+    height: 55px;
   }
   
   button {
@@ -646,34 +586,19 @@ button:hover, button:active {
     font-size: 16px;
   }
   
-  .control-button {
-    height: 50px;
+  .action-button {
+    padding: 10px;
+    font-size: 15px;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1024px) {
-  .direction-controls {
-    max-width: 250px;
+@media (max-height: 700px) {
+  .game-board-wrapper {
+    margin-bottom: 15px;
   }
   
-  .control-button {
-    height: 70px;
-  }
-  
-  button {
-    font-size: 18px;
-    padding: 15px 25px;
-  }
-}
-
-.game-content.landscape {
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    align-items: center;
-    
-    .game-board-wrapper {
-      margin: 0 0 20px;
-    }
+  .mobile-controls {
+    gap: 15px;
   }
 }
 `;
