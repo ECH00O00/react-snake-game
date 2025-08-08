@@ -1,20 +1,29 @@
 body {
     background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.container {
+    max-width: 100%;
+    padding: 0;
 }
 
 .card {
     border-radius: 15px;
     overflow: hidden;
+    border: none;
 }
 
 .game-board {
-    background-color: #ffffff;
-    border: 2px solid #e9ecef;
+    background-color: #f0f8ff;
+    border: 2px solid #c0d6e4;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     position: relative;
+    touch-action: none;
 }
 
 .grid-cell {
@@ -42,6 +51,11 @@ body {
     animation: pulse 1s infinite alternate;
     z-index: 2;
     box-shadow: 0 0 10px rgba(220, 53, 69, 0.6);
+}
+
+.grid-cell.wall {
+    background-color: #6c757d;
+    z-index: 1;
 }
 
 @keyframes pulse {
@@ -104,6 +118,10 @@ body {
     font-weight: 500;
 }
 
+.mobile-controls {
+    margin-top: 20px;
+}
+
 @media (max-width: 768px) {
     .btn-outline-primary {
         width: 50px;
@@ -114,6 +132,15 @@ body {
     .action-buttons .btn {
         font-size: 14px;
         padding: 8px 12px;
+    }
+
+    .card {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .container {
+        padding: 0;
     }
 }
 
@@ -130,5 +157,11 @@ body {
         width: 45px;
         height: 45px;
         font-size: 18px;
+    }
+
+    .game-over-overlay h2,
+    .start-screen-overlay h2,
+    .pause-overlay h2 {
+        font-size: 24px;
     }
 }

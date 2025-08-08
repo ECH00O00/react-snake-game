@@ -12,7 +12,7 @@ const SnakeGame = () => {
   
   // 游戏状态
   const [snake, setSnake] = useState([{x: 7, y: 7}]);
-  const [food, setFood] = useState({x: 3, y: 3});
+  const [food, setFood] = useState({x: 5, y: 5});
   const [direction, setDirection] = useState('RIGHT');
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
@@ -37,11 +37,11 @@ const SnakeGame = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // 生成随机食物 - 修复食物显示问题
+  // 生成随机食物 - 确保在游戏区域内
   const generateFood = useCallback(() => {
     const newFood = {
-      x: Math.floor(Math.random() * gridSize),
-      y: Math.floor(Math.random() * gridSize)
+      x: Math.floor(Math.random() * (gridSize - 2)) + 1, // 确保在1到gridSize-2之间
+      y: Math.floor(Math.random() * (gridSize - 2)) + 1
     };
     
     // 确保食物不会出现在蛇身上
@@ -74,13 +74,14 @@ const SnakeGame = () => {
     setIsPaused(!isPaused);
   };
   
-  // 修复移动端滑动控制问题
+  // 修复移动端滑动控制问题并防止页面滚动
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
     touchStartRef.current = {
       x: touch.clientX,
       y: touch.clientY
     };
+    e.preventDefault(); // 防止页面滚动
   };
   
   const handleTouchMove = (e) => {
@@ -112,6 +113,7 @@ const SnakeGame = () => {
         x: touch.clientX,
         y: touch.clientY
       };
+      e.preventDefault(); // 防止页面滚动
     }
   };
   
@@ -149,7 +151,7 @@ const SnakeGame = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [direction, gameStarted, isPaused]);
   
-  // 游戏主循环
+  // 游戏主循环 - 添加墙壁碰撞检测
   useEffect(() => {
     if (!gameStarted || gameOver || isPaused) return;
     
@@ -164,9 +166,11 @@ const SnakeGame = () => {
           case 'RIGHT': head.x += 1; break;
         }
         
-        // 穿墙功能
-        head.x = (head.x + gridSize) % gridSize;
-        head.y = (head.y + gridSize) % gridSize;
+        // 检查是否撞墙 (0 和 gridSize-1 是墙壁)
+        if (head.x <= 0 || head.x >= gridSize - 1 || head.y <= 0 || head.y >= gridSize - 1) {
+          setGameOver(true);
+          return prevSnake;
+        }
         
         // 检查是否撞到自己
         if (prevSnake.some(
@@ -208,7 +212,7 @@ const SnakeGame = () => {
     return () => clearInterval(gameInterval);
   }, [direction, food, speed, gameOver, score, gameStarted, highScore, gridSize, generateFood, isPaused]);
   
-  // 渲染网格单元格
+  // 渲染网格单元格 - 添加墙壁渲染
   const renderCells = () => {
     const cells = [];
     
@@ -217,11 +221,13 @@ const SnakeGame = () => {
         const isSnake = snake.some(segment => segment.x === x && segment.y === y);
         const isFood = food.x === x && food.y === y;
         const isHead = snake[0].x === x && snake[0].y === y;
+        const isWall = x === 0 || x === gridSize - 1 || y === 0 || y === gridSize - 1;
         
         let cellClass = "grid-cell";
         if (isSnake) cellClass += " snake";
         if (isFood) cellClass += " food";
         if (isHead) cellClass += " snake-head";
+        if (isWall) cellClass += " wall";
         
         cells.push(
           <div 
